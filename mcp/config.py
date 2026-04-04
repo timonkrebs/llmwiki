@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     TURBOPUFFER_API_KEY: str = ""
     EMBEDDING_MODEL: str = "voyage-4-lite"
     EMBEDDING_DIM: int = 512
+    LOGFIRE_TOKEN: str = ""
     STAGE: str = "dev"
     APP_URL: str = "http://localhost:3000"
     API_URL: str = "http://localhost:8000"

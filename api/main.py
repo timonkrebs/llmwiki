@@ -1,10 +1,15 @@
 from contextlib import asynccontextmanager
 
 import asyncpg
+import logfire
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
+
+if settings.LOGFIRE_TOKEN:
+    logfire.configure(token=settings.LOGFIRE_TOKEN, service_name="supavault-api")
+    logfire.instrument_asyncpg()
 from routes.health import router as health_router
 from routes.knowledge_bases import router as knowledge_bases_router
 from routes.documents import router as documents_router
@@ -28,6 +33,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if settings.LOGFIRE_TOKEN:
+    logfire.instrument_fastapi(app)
 
 app.include_router(health_router)
 app.include_router(knowledge_bases_router)

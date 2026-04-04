@@ -2,6 +2,7 @@
 
 import os
 
+import logfire
 import uvicorn
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.fastmcp import FastMCP
@@ -12,6 +13,10 @@ from starlette.routing import Route
 from auth import SupabaseTokenVerifier
 from config import settings
 from tools import register
+
+if settings.LOGFIRE_TOKEN:
+    logfire.configure(token=settings.LOGFIRE_TOKEN, service_name="supavault-mcp")
+    logfire.instrument_asyncpg()
 
 mcp = FastMCP(
     "Supavault",
