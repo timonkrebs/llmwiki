@@ -4,6 +4,7 @@ CREATE TABLE users (
     id UUID PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
     display_name TEXT,
+    onboarded BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
@@ -27,7 +28,8 @@ CREATE TABLE knowledge_bases (
     description TEXT,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-    UNIQUE(user_id, slug)
+    UNIQUE(user_id, slug),
+    UNIQUE(user_id, name)
 );
 
 CREATE TABLE documents (

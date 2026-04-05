@@ -1,16 +1,9 @@
 import { pdfjs } from 'react-pdf'
 
-const PDF_WORKER_SRC = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString()
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
 export function ensurePdfWorker(): void {
-  if (pdfjs.GlobalWorkerOptions.workerSrc !== PDF_WORKER_SRC) {
-    pdfjs.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC
-  }
+  // Already configured above — this is a no-op guard for call sites
 }
 
-ensurePdfWorker()
-
-export { pdfjs, PDF_WORKER_SRC }
+export { pdfjs }

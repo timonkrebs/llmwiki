@@ -241,7 +241,7 @@ class OCRService:
 
         current_pages = await self._pool.fetchval(
             "SELECT COALESCE(SUM(page_count), 0) FROM documents "
-            "WHERE user_id = $1 AND NOT archived AND id != $2",
+            "WHERE user_id = $1 AND id != $2",
             user_id, document_id,
         )
         if current_pages + len(pages) > settings.QUOTA_MAX_PAGES:

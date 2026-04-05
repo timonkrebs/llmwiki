@@ -4,6 +4,7 @@ import * as React from 'react'
 import {
   ChevronRight, FileText, FolderOpen, NotepadText, Folder, Loader2,
   Upload, BookOpen, ArrowUpRight, Plus, Search as SearchIcon,
+  Image, Sheet, Presentation, FileCode,
 } from 'lucide-react'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -666,11 +667,16 @@ function SourceTreeNode({
         <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground/50" />
       ) : node.doc?.status === 'failed' ? (
         <FileText className="size-3 shrink-0 text-destructive/60" />
-      ) : node.doc?.file_type === 'pdf' ? (
-        <FileText className="size-3 shrink-0 opacity-50" />
-      ) : (
-        <NotepadText className="size-3 shrink-0 opacity-50" />
-      )}
+      ) : (() => {
+        const ft = node.doc?.file_type || ''
+        const cls = "size-3 shrink-0 opacity-50"
+        if (ft === 'pdf') return <FileText className={cls} />
+        if (['png','jpg','jpeg','webp','gif'].includes(ft)) return <Image className={cls} />
+        if (['xlsx','xls','csv'].includes(ft)) return <Sheet className={cls} />
+        if (['pptx','ppt'].includes(ft)) return <Presentation className={cls} />
+        if (['html','htm'].includes(ft)) return <FileCode className={cls} />
+        return <NotepadText className={cls} />
+      })()}
       <span className="truncate flex-1">{node.name}</span>
       <SourceContextMenu
         open={contextOpen}

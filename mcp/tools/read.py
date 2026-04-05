@@ -7,10 +7,12 @@ from mcp.server.fastmcp.utilities.types import Image
 from db import scoped_query, scoped_queryrow
 from .helpers import (
     get_user_id, resolve_kb, deep_link, resolve_path,
-    load_s3_bytes, parse_page_range,
+    load_s3_bytes, parse_page_range, glob_match,
 )
 
 logger = logging.getLogger(__name__)
+
+MAX_BATCH_CHARS = 30_000
 
 
 def _extract_sections(content: str, section_names: list[str]) -> str:
@@ -111,17 +113,69 @@ async def _read_spreadsheet_index(doc: dict, header: str) -> str:
     return "\n".join(lines)
 
 
+async def _read_batch(user_id: str, kb: dict, path: str) -> str:
+    docs = await scoped_query(
+        user_id,
+        "SELECT id, filename, title, path, content, tags, file_type "
+        "FROM documents WHERE knowledge_base_id = $1 AND NOT archived "
+        "ORDER BY path, filename",
+        kb["id"],
+    )
+
+    glob_pat = "/" + path.lstrip("/") if not path.startswith("/") else path
+    docs = [d for d in docs if glob_match(d["path"] + d["filename"], glob_pat)]
+
+    if not docs:
+        return f"No documents matching `{path}` in {kb['slug']}."
+
+    text_types = {"md", "txt", "csv", "html", "svg", "json", "xml"}
+    readable = [d for d in docs if (d["file_type"] or "") in text_types and d["content"]]
+    skipped = [d for d in docs if d not in readable]
+
+    if not readable:
+        lines = [f"**{len(skipped)} binary/empty file(s)** matching `{path}` — read individually with page ranges."]
+        for d in skipped:
+            lines.append(f"  {d['path']}{d['filename']} ({d['file_type']})")
+        return "\n".join(lines)
+
+    budget = MAX_BATCH_CHARS // len(readable)
+    any_truncated = False
+    parts = []
+
+    for doc in readable:
+        content = doc["content"] or ""
+        link = deep_link(kb["slug"], doc["path"], doc["filename"])
+        if len(content) > budget:
+            content = content[:budget] + "\n\n... (truncated)"
+            any_truncated = True
+        parts.append(f"### [{doc['path']}{doc['filename']}]({link})\n\n{content}")
+
+    header = f"**{len(readable)} document(s)** matching `{path}`"
+    if any_truncated:
+        header += f" ({budget:,} char budget per doc)"
+    if skipped:
+        header += f"\n*{len(skipped)} binary/empty file(s) skipped — read individually with page ranges*"
+    header += "\n\n---\n\n"
+
+    return header + "\n\n---\n\n".join(parts)
+
+
 def register(mcp: FastMCP) -> None:
 
     @mcp.tool(
         name="read",
         description=(
             "Read document content from the knowledge vault.\n\n"
+            "Accepts a single file path OR a glob pattern to batch-read multiple files:\n"
+            "- `path=\"notes.md\"` — read one file\n"
+            "- `path=\"*.md\"` — read all markdown files in root\n"
+            "- `path=\"/wiki/**\"` — read all wiki pages\n"
+            "- `path=\"**/*.md\"` — read all markdown files everywhere\n\n"
+            "Batch reads concatenate text content (md, txt, csv, etc.) with citable links and truncate at 30k characters. "
+            "Binary files (PDFs, images) are listed but must be read individually with page ranges.\n\n"
             "For PDFs and office docs, use `pages` to read specific page ranges (e.g. '1-5', '3').\n"
             "For spreadsheets, each sheet is a page (call without pages first to see sheet names).\n"
-            "Images on requested pages are automatically included in the response.\n"
-            "For image files (png, jpg, etc.), the image is returned directly.\n"
-            "For markdown notes, optionally extract specific sections by heading.\n\n"
+            "Images on requested pages are automatically included in the response.\n\n"
             "When reading sources to compile wiki pages, note the filename and page ranges for citation."
         ),
     )
@@ -137,6 +191,10 @@ def register(mcp: FastMCP) -> None:
         kb = await resolve_kb(user_id, knowledge_base)
         if not kb:
             return f"Knowledge base '{knowledge_base}' not found."
+
+        is_glob = "*" in path or "?" in path
+        if is_glob:
+            return await _read_batch(user_id, kb, path)
 
         dir_path, filename = resolve_path(path)
 

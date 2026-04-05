@@ -164,6 +164,7 @@ export function NoteEditor({
     let cancelled = false
 
     const load = async () => {
+      setLoaded(false)
       const token = await getAccessToken()
       if (!token || cancelled) return
 
@@ -557,7 +558,13 @@ export function NoteEditor({
             </button>
           </div>}
 
-          <EditorContent editor={editor} />
+          {loaded && editor ? (
+            <EditorContent editor={editor} />
+          ) : (
+            <div className="flex min-h-[240px] items-center justify-center">
+              <span className="text-sm text-muted-foreground">Loading note...</span>
+            </div>
+          )}
         </div>
       </div>
 

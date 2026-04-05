@@ -218,7 +218,7 @@ async def tus_create(request: Request):
 
     pool = request.app.state.pool
     current_bytes = await pool.fetchval(
-        "SELECT COALESCE(SUM(file_size), 0) FROM documents WHERE user_id = $1 AND NOT archived",
+        "SELECT COALESCE(SUM(file_size), 0) FROM documents WHERE user_id = $1",
         user_id,
     )
     in_progress_bytes = sum(u.upload_length for u in _uploads.values() if u.user_id == user_id)
