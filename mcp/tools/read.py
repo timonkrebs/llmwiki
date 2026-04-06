@@ -232,7 +232,7 @@ def register(mcp: FastMCP) -> None:
             "- `path=\"/wiki/**\"` — read all wiki pages\n"
             "- `path=\"**/*.md\"` — read all markdown files everywhere\n\n"
             "Batch reads are the PREFERRED way to read multiple documents at once — use them generously.\n"
-            "Glob reads sample the first few pages from each document (including PDFs) up to a 60k char budget. "
+            "Glob reads sample the first few pages from each document (including PDFs) up to a 120k char budget. "
             "This gives you a broad overview of an entire folder in one call. Read individual files for full content.\n\n"
             "For PDFs and office docs, use `pages` to read specific page ranges (e.g. '1-50', '3', '10-30').\n"
             "You can read up to 50+ pages in a single call — use wide ranges to avoid unnecessary round trips.\n"
