@@ -73,8 +73,30 @@ def _get_s3_session():
         )
     return _s3_session
 
+async def load_local_bytes(key: str) -> bytes | None:
+    if not settings.LOCAL_STORAGE_DIR:
+        return None
+    try:
+        from pathlib import Path
+        import asyncio
+        base_dir = Path(settings.LOCAL_STORAGE_DIR).resolve()
+        file_path = (base_dir / key).resolve()
+        try:
+            file_path.relative_to(base_dir)
+        except ValueError:
+            return None
+        if not file_path.exists() or not file_path.is_file():
+            return None
+        return await asyncio.to_thread(file_path.read_bytes)
+    except Exception as e:
+        logger.warning("Failed to load local storage key %s: %s", key, e)
+        return None
+
 
 async def load_s3_bytes(key: str) -> bytes | None:
+    if settings.LOCAL_STORAGE_DIR:
+        return await load_local_bytes(key)
+
     session = _get_s3_session()
     if not session:
         return None

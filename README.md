@@ -144,6 +144,7 @@ AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_REGION=us-east-1
 S3_BUCKET=your-bucket
+LOCAL_STORAGE_DIR=/data      # Set this to use local filesystem instead of S3
 APP_URL=http://localhost:3000
 CONVERTER_URL=               # optional, URL of isolated converter service
 ```
@@ -156,6 +157,25 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_MCP_URL=http://localhost:8080/mcp
 ```
+
+### Full Docker Setup
+
+You can also run all services together in Docker, completely locally without needing external cloud dependencies like Supabase or AWS S3. It uses a local PostgreSQL database and mounts a volume for document ingestion via the `LOCAL_STORAGE_DIR` setting.
+
+First, copy the example environment file if you haven't already:
+
+```bash
+cp .env.example .env
+```
+
+Then spin up the entire stack (Database, API, MCP Server, and Web Interface):
+
+```bash
+docker compose up --build
+```
+
+Once running, navigate to `http://localhost:3000` to start using the Web interface. The MCP server will be available at `http://localhost:8080/mcp`.
+
 
 ---
 
