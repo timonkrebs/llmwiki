@@ -31,6 +31,7 @@ from routes.api_keys import router as api_keys_router
 from routes.me import router as me_router
 from routes.usage import router as usage_router
 from routes.admin import router as admin_router
+from routes.tools import router as tools_router
 from infra.tus import router as tus_router, cleanup_stale_uploads
 
 
@@ -97,4 +98,5 @@ app.include_router(api_keys_router)
 app.include_router(me_router)
 app.include_router(usage_router)
 app.include_router(admin_router)
+app.include_router(tools_router)
 app.include_router(tus_router)

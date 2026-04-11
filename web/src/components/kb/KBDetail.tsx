@@ -10,6 +10,7 @@ import { apiFetch } from '@/lib/api'
 import { toast } from 'sonner'
 import { KBSidenav } from '@/components/kb/KBSidenav'
 import { SelectionActionBar } from '@/components/kb/SelectionActionBar'
+import { ChatSidebar } from '@/components/chat/ChatSidebar'
 import { WikiContent, extractTocFromMarkdown } from '@/components/wiki/WikiContent'
 import { NoteEditor } from '@/components/editor/NoteEditor'
 import {
@@ -801,6 +802,8 @@ export function KBDetail({ kbId, kbName }: Props) {
         onDelete={handleDeleteSelected}
         onClear={clearSelection}
       />
+
+      <ChatSidebar knowledgeBaseId={kbId} />
     </div>
   )
 }
