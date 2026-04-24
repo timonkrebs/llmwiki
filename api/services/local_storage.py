@@ -1,7 +1,11 @@
 import asyncio
+import hashlib
+import hmac
 import json
 import logging
 import os
+import time
+import urllib.parse
 from pathlib import Path
 
 from config import settings
@@ -27,9 +31,15 @@ class LocalStorageService:
         await self.upload_bytes(key, data, content_type)
 
     async def generate_presigned_get(self, key: str, expires_in: int = 3600) -> str:
+        expires = int(time.time()) + expires_in
+        secret = settings.SUPABASE_JWT_SECRET or "local-dev-secret"
+        message = f"{key}:{expires}".encode("utf-8")
+        signature = hmac.new(secret.encode("utf-8"), message, hashlib.sha256).hexdigest()
+
         # For local storage, we serve files via a dedicated API route
         # Using settings.API_URL which defaults to http://localhost:8000
-        return f"{settings.API_URL.rstrip('/')}/v1/storage/{key}"
+        base_url = f"{settings.API_URL.rstrip('/')}/v1/storage/{urllib.parse.quote(key)}"
+        return f"{base_url}?expires={expires}&signature={signature}"
 
     async def generate_presigned_put(self, key: str, content_type: str = "application/pdf", expires_in: int = 3600) -> str:
         raise NotImplementedError("Presigned PUT is not supported in local storage")
